@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useLanguage } from "@/hooks/useLanguage";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,6 +18,7 @@ type Job = Database["public"]["Tables"]["jobs"]["Row"];
 
 export default function JobsPage() {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const { toast } = useToast();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [open, setOpen] = useState(false);
@@ -36,27 +38,20 @@ export default function JobsPage() {
     if (!user || !form.title.trim()) return;
     if (editingJob) {
       const { error } = await supabase.from("jobs").update({
-        title: form.title,
-        description: form.description,
-        location: form.location,
-        status: form.status,
+        title: form.title, description: form.description, location: form.location, status: form.status,
       }).eq("id", editingJob.id);
-      if (error) { toast({ title: "Fel", description: error.message, variant: "destructive" }); return; }
+      if (error) { toast({ title: t.error, description: error.message, variant: "destructive" }); return; }
     } else {
       const { error } = await supabase.from("jobs").insert({
-        title: form.title,
-        description: form.description,
-        location: form.location,
-        status: form.status,
-        customer_id: user.id,
+        title: form.title, description: form.description, location: form.location, status: form.status, customer_id: user.id,
       });
-      if (error) { toast({ title: "Fel", description: error.message, variant: "destructive" }); return; }
+      if (error) { toast({ title: t.error, description: error.message, variant: "destructive" }); return; }
     }
     setForm({ title: "", description: "", location: "", status: "open" });
     setEditingJob(null);
     setOpen(false);
     fetchJobs();
-    toast({ title: editingJob ? "Jobb uppdaterat" : "Jobb skapat" });
+    toast({ title: editingJob ? t.jobUpdated : t.jobCreated });
   };
 
   const handleDelete = async (id: string) => {
@@ -82,46 +77,52 @@ export default function JobsPage() {
     return "bg-muted text-muted-foreground";
   };
 
+  const statusLabel = (s: string) => {
+    if (s === "open") return t.statusOpen;
+    if (s === "closed") return t.statusClosed;
+    return t.statusDraft;
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Jobb</h1>
-          <p className="text-muted-foreground text-sm">Hantera dina lediga tjänster</p>
+          <h1 className="text-2xl font-bold">{t.jobsTitle}</h1>
+          <p className="text-muted-foreground text-sm">{t.jobsSubtitle}</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button onClick={openCreate}><Plus className="h-4 w-4 mr-2" />Nytt jobb</Button>
+            <Button onClick={openCreate}><Plus className="h-4 w-4 mr-2" />{t.newJob}</Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>{editingJob ? "Redigera jobb" : "Skapa nytt jobb"}</DialogTitle>
+              <DialogTitle>{editingJob ? t.editJob : t.createNewJob}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 pt-2">
               <div className="space-y-2">
-                <Label>Titel</Label>
-                <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="T.ex. Frontend-utvecklare" />
+                <Label>{t.jobTitle}</Label>
+                <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder={t.jobTitlePlaceholder} />
               </div>
               <div className="space-y-2">
-                <Label>Plats</Label>
-                <Input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder="T.ex. Stockholm" />
+                <Label>{t.jobLocation}</Label>
+                <Input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder={t.jobLocationPlaceholder} />
               </div>
               <div className="space-y-2">
-                <Label>Beskrivning</Label>
-                <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Beskriv tjänsten..." rows={4} />
+                <Label>{t.jobDescription}</Label>
+                <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder={t.jobDescriptionPlaceholder} rows={4} />
               </div>
               <div className="space-y-2">
-                <Label>Status</Label>
+                <Label>{t.jobStatus}</Label>
                 <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="open">Öppen</SelectItem>
-                    <SelectItem value="draft">Utkast</SelectItem>
-                    <SelectItem value="closed">Stängd</SelectItem>
+                    <SelectItem value="open">{t.statusOpen}</SelectItem>
+                    <SelectItem value="draft">{t.statusDraft}</SelectItem>
+                    <SelectItem value="closed">{t.statusClosed}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              <Button onClick={handleSave} className="w-full">{editingJob ? "Spara ändringar" : "Skapa jobb"}</Button>
+              <Button onClick={handleSave} className="w-full">{editingJob ? t.saveChanges : t.createJob}</Button>
             </div>
           </DialogContent>
         </Dialog>
@@ -133,7 +134,7 @@ export default function JobsPage() {
             <CardHeader className="pb-2">
               <div className="flex items-start justify-between">
                 <CardTitle className="text-base">{job.title}</CardTitle>
-                <Badge className={statusColor(job.status)}>{job.status === "open" ? "Öppen" : job.status === "closed" ? "Stängd" : "Utkast"}</Badge>
+                <Badge className={statusColor(job.status)}>{statusLabel(job.status)}</Badge>
               </div>
             </CardHeader>
             <CardContent>
@@ -144,7 +145,7 @@ export default function JobsPage() {
               )}
               {job.description && <p className="text-sm text-muted-foreground line-clamp-2">{job.description}</p>}
               <div className="flex gap-2 mt-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                <Button size="sm" variant="outline" onClick={() => openEdit(job)}><Pencil className="h-3.5 w-3.5 mr-1" />Redigera</Button>
+                <Button size="sm" variant="outline" onClick={() => openEdit(job)}><Pencil className="h-3.5 w-3.5 mr-1" />{t.edit}</Button>
                 <Button size="sm" variant="outline" className="text-destructive" onClick={() => handleDelete(job.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
               </div>
             </CardContent>
@@ -152,7 +153,7 @@ export default function JobsPage() {
         ))}
         {jobs.length === 0 && (
           <div className="col-span-full text-center py-12 text-muted-foreground">
-            <p>Inga jobb ännu. Skapa ditt första jobb för att komma igång!</p>
+            <p>{t.noJobsYet}</p>
           </div>
         )}
       </div>

@@ -1,33 +1,28 @@
-import { Briefcase, Users, LayoutDashboard, Settings, LogOut, UserPlus } from "lucide-react";
+import { Briefcase, Users, LayoutDashboard, LogOut, UserPlus } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/hooks/useAuth";
+import { useLanguage } from "@/hooks/useLanguage";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarFooter,
-  useSidebar,
+  Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
+  SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarFooter, useSidebar,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 
 export function AppSidebar() {
   const { isAdmin, signOut, user } = useAuth();
+  const { t } = useLanguage();
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
 
   const mainItems = [
-    { title: "Kanban", url: "/", icon: LayoutDashboard },
-    { title: "Jobb", url: "/jobs", icon: Briefcase },
-    { title: "Kandidater", url: "/candidates", icon: Users },
+    { title: t.pipeline, url: "/", icon: LayoutDashboard },
+    { title: t.jobs, url: "/jobs", icon: Briefcase },
+    { title: t.candidates, url: "/candidates", icon: Users },
   ];
 
   const adminItems = [
-    { title: "Hantera konton", url: "/admin/users", icon: UserPlus },
+    { title: t.manageAccounts, url: "/admin/users", icon: UserPlus },
   ];
 
   return (
@@ -43,7 +38,7 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {mainItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
+                <SidebarMenuItem key={item.url}>
                   <SidebarMenuButton asChild>
                     <NavLink to={item.url} end className="hover:bg-sidebar-accent/50" activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium">
                       <item.icon className="mr-2 h-4 w-4" />
@@ -58,11 +53,11 @@ export function AppSidebar() {
 
         {isAdmin && (
           <SidebarGroup>
-            <SidebarGroupLabel>Admin</SidebarGroupLabel>
+            <SidebarGroupLabel>{t.admin}</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {adminItems.map((item) => (
-                  <SidebarMenuItem key={item.title}>
+                  <SidebarMenuItem key={item.url}>
                     <SidebarMenuButton asChild>
                       <NavLink to={item.url} end className="hover:bg-sidebar-accent/50" activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium">
                         <item.icon className="mr-2 h-4 w-4" />
@@ -77,10 +72,11 @@ export function AppSidebar() {
         )}
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-sidebar-border p-3">
+      <SidebarFooter className="border-t border-sidebar-border p-3 space-y-1">
         {!collapsed && user && (
           <p className="text-xs text-sidebar-foreground/60 truncate mb-2">{user.email}</p>
         )}
+        <LanguageSwitcher collapsed={collapsed} />
         <Button
           variant="ghost"
           size="sm"
@@ -88,7 +84,7 @@ export function AppSidebar() {
           onClick={signOut}
         >
           <LogOut className="h-4 w-4 mr-2" />
-          {!collapsed && "Logga ut"}
+          {!collapsed && t.signOut}
         </Button>
       </SidebarFooter>
     </Sidebar>

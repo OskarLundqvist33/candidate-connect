@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
+import { LanguageProvider, useLanguage } from "@/hooks/useLanguage";
 import { AppLayout } from "@/components/AppLayout";
 import LoginPage from "@/pages/LoginPage";
 import KanbanPage from "@/pages/KanbanPage";
@@ -16,7 +17,8 @@ const queryClient = new QueryClient();
 
 function ProtectedRoute({ children, adminOnly = false }: { children: React.ReactNode; adminOnly?: boolean }) {
   const { user, isLoading, isAdmin } = useAuth();
-  if (isLoading) return <div className="flex items-center justify-center min-h-screen text-muted-foreground">Laddar...</div>;
+  const { t } = useLanguage();
+  if (isLoading) return <div className="flex items-center justify-center min-h-screen text-muted-foreground">{t.loading}</div>;
   if (!user) return <Navigate to="/login" replace />;
   if (adminOnly && !isAdmin) return <Navigate to="/" replace />;
   return <AppLayout>{children}</AppLayout>;
@@ -24,7 +26,8 @@ function ProtectedRoute({ children, adminOnly = false }: { children: React.React
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
-  if (isLoading) return <div className="flex items-center justify-center min-h-screen text-muted-foreground">Laddar...</div>;
+  const { t } = useLanguage();
+  if (isLoading) return <div className="flex items-center justify-center min-h-screen text-muted-foreground">{t.loading}</div>;
   if (user) return <Navigate to="/" replace />;
   return <>{children}</>;
 }
@@ -35,16 +38,18 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <AuthProvider>
-          <Routes>
-            <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
-            <Route path="/" element={<ProtectedRoute><KanbanPage /></ProtectedRoute>} />
-            <Route path="/jobs" element={<ProtectedRoute><JobsPage /></ProtectedRoute>} />
-            <Route path="/candidates" element={<ProtectedRoute><CandidatesPage /></ProtectedRoute>} />
-            <Route path="/admin/users" element={<ProtectedRoute adminOnly><AdminUsersPage /></ProtectedRoute>} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </AuthProvider>
+        <LanguageProvider>
+          <AuthProvider>
+            <Routes>
+              <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
+              <Route path="/" element={<ProtectedRoute><KanbanPage /></ProtectedRoute>} />
+              <Route path="/jobs" element={<ProtectedRoute><JobsPage /></ProtectedRoute>} />
+              <Route path="/candidates" element={<ProtectedRoute><CandidatesPage /></ProtectedRoute>} />
+              <Route path="/admin/users" element={<ProtectedRoute adminOnly><AdminUsersPage /></ProtectedRoute>} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </AuthProvider>
+        </LanguageProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
