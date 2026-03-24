@@ -285,7 +285,7 @@ const translations = {
 
 export type TranslationKey = keyof typeof translations.en;
 
-type Translations = typeof translations.en | typeof translations.sv;
+type Translations = typeof translations.en;
 
 interface LanguageContextType {
   lang: Language;
