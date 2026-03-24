@@ -156,6 +156,16 @@ export default function KanbanPage() {
           );
         })}
       </div>
+
+      {jobCandidates.length === 0 && jobs.length === 0 && (
+        <div className="text-center py-12 text-muted-foreground">
+          <p className="mb-4">No data yet. Load demo data to see the pipeline in action.</p>
+          <Button onClick={handleSeedData} disabled={seeding} variant="outline">
+            {seeding ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <DatabaseIcon className="h-4 w-4 mr-2" />}
+            {seeding ? "Loading..." : "Load demo data"}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
