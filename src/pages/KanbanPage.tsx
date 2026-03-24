@@ -25,6 +25,7 @@ export default function KanbanPage() {
   const [selectedJob, setSelectedJob] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [seeding, setSeeding] = useState(false);
 
   const STAGES: { key: CandidateStage; label: string; color: string }[] = [
     { key: "new", label: t.stageNew, color: "bg-stage-new" },
