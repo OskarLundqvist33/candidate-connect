@@ -228,10 +228,12 @@ const translations = {
 
 export type TranslationKey = keyof typeof translations.en;
 
+type Translations = typeof translations.en | typeof translations.sv;
+
 interface LanguageContextType {
   lang: Language;
   setLang: (l: Language) => void;
-  t: typeof translations.en;
+  t: Translations;
 }
 
 const LanguageContext = createContext<LanguageContextType | null>(null);
