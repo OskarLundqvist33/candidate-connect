@@ -1,5 +1,6 @@
 import { Briefcase, Users, LayoutDashboard, LogOut, UserPlus, Settings } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
@@ -77,16 +78,12 @@ export function AppSidebar() {
           <p className="text-xs text-sidebar-foreground/60 truncate mb-2">{user.email}</p>
         )}
         <LanguageSwitcher collapsed={collapsed} />
-        <Button
-          variant="ghost"
-          size="sm"
-          className="w-full justify-start text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
-          onClick={() => window.location.href = "/settings"}
-          asChild={false}
-        >
-          <Settings className="h-4 w-4 mr-2" />
-          {!collapsed && t.settings}
-        </Button>
+        <SidebarMenuButton asChild>
+          <NavLink to="/settings" className="hover:bg-sidebar-accent/50" activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium">
+            <Settings className="mr-2 h-4 w-4" />
+            {!collapsed && <span>{t.settings}</span>}
+          </NavLink>
+        </SidebarMenuButton>
         <Button
           variant="ghost"
           size="sm"
