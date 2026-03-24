@@ -52,6 +52,20 @@ export default function KanbanPage() {
     if (jcRes.data) setJobCandidates(jcRes.data);
   };
 
+  const handleSeedData = async () => {
+    setSeeding(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("seed-demo-data");
+      if (error) throw error;
+      toast({ title: "Demo data loaded!", description: `${data.jobs || 0} jobs and ${data.candidates || 0} candidates created.` });
+      fetchData();
+    } catch (err: any) {
+      toast({ title: t.error, description: err.message, variant: "destructive" });
+    } finally {
+      setSeeding(false);
+    }
+  };
+
   const handleDragStart = (e: React.DragEvent, jcId: string) => {
     setDraggedId(jcId);
     e.dataTransfer.effectAllowed = "move";
