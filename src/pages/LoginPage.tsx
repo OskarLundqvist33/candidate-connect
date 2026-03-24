@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useLanguage } from "@/hooks/useLanguage";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Briefcase } from "lucide-react";
+import { Briefcase, Globe } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 
@@ -13,6 +14,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const { signIn } = useAuth();
+  const { t, lang, setLang } = useLanguage();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -23,7 +25,7 @@ export default function LoginPage() {
       await signIn(email, password);
       navigate("/");
     } catch (err: any) {
-      toast({ title: "Inloggningsfel", description: err.message, variant: "destructive" });
+      toast({ title: t.loginError, description: err.message, variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -31,40 +33,36 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <div className="absolute top-4 right-4">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setLang(lang === "en" ? "sv" : "en")}
+        >
+          <Globe className="h-4 w-4 mr-2" />
+          {lang === "en" ? "Svenska" : "English"}
+        </Button>
+      </div>
       <Card className="w-full max-w-md animate-slide-in">
         <CardHeader className="text-center space-y-2">
           <div className="mx-auto w-12 h-12 bg-primary rounded-lg flex items-center justify-center mb-2">
             <Briefcase className="h-6 w-6 text-primary-foreground" />
           </div>
-          <CardTitle className="text-2xl font-bold">TalentTrack</CardTitle>
-          <CardDescription>Logga in för att hantera dina rekryteringar</CardDescription>
+          <CardTitle className="text-2xl font-bold">{t.loginTitle}</CardTitle>
+          <CardDescription>{t.loginSubtitle}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">E-post</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="din@email.se"
-                required
-              />
+              <Label htmlFor="email">{t.emailLabel}</Label>
+              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t.emailPlaceholder} required />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Lösenord</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-              />
+              <Label htmlFor="password">{t.passwordLabel}</Label>
+              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={t.passwordPlaceholder} required />
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Loggar in..." : "Logga in"}
+              {loading ? t.signingIn : t.signIn}
             </Button>
           </form>
         </CardContent>
