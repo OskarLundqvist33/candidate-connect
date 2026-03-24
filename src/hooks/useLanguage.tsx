@@ -104,6 +104,17 @@ const translations = {
     creatingAccount: "Creating...",
     accountCreated: "Account created",
     accountCreatedDesc: (name: string, role: string) => `${name} (${role}) has been created`,
+    existingUsers: "Existing users",
+    existingUsersDesc: "View and manage all user accounts",
+    userDeleted: "User deleted",
+    confirmDeleteUser: "Delete user?",
+    confirmDeleteUserDesc: (email: string) => `Are you sure you want to delete ${email}? This action cannot be undone.`,
+    resetPassword: "Reset password",
+    resetPasswordFor: (email: string) => `Reset password for ${email}`,
+    changeRole: "Change role",
+    changeRoleFor: (email: string) => `Change role for ${email}`,
+    roleUpdated: "Role updated",
+    noUsersFound: "No users found",
 
     // AI Assessment
     assessCandidate: "AI Assessment",
