@@ -11,6 +11,7 @@ import KanbanPage from "@/pages/KanbanPage";
 import JobsPage from "@/pages/JobsPage";
 import CandidatesPage from "@/pages/CandidatesPage";
 import AdminUsersPage from "@/pages/AdminUsersPage";
+import SettingsPage from "@/pages/SettingsPage";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -45,6 +46,7 @@ const App = () => (
               <Route path="/" element={<ProtectedRoute><KanbanPage /></ProtectedRoute>} />
               <Route path="/jobs" element={<ProtectedRoute><JobsPage /></ProtectedRoute>} />
               <Route path="/candidates" element={<ProtectedRoute><CandidatesPage /></ProtectedRoute>} />
+              <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
               <Route path="/admin/users" element={<ProtectedRoute adminOnly><AdminUsersPage /></ProtectedRoute>} />
               <Route path="*" element={<NotFound />} />
             </Routes>

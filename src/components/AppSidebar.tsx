@@ -1,4 +1,4 @@
-import { Briefcase, Users, LayoutDashboard, LogOut, UserPlus } from "lucide-react";
+import { Briefcase, Users, LayoutDashboard, LogOut, UserPlus, Settings } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -77,6 +77,16 @@ export function AppSidebar() {
           <p className="text-xs text-sidebar-foreground/60 truncate mb-2">{user.email}</p>
         )}
         <LanguageSwitcher collapsed={collapsed} />
+        <Button
+          variant="ghost"
+          size="sm"
+          className="w-full justify-start text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+          onClick={() => window.location.href = "/settings"}
+          asChild={false}
+        >
+          <Settings className="h-4 w-4 mr-2" />
+          {!collapsed && t.settings}
+        </Button>
         <Button
           variant="ghost"
           size="sm"
