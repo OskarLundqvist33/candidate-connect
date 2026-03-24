@@ -104,6 +104,17 @@ const translations = {
     creatingAccount: "Creating...",
     accountCreated: "Account created",
     accountCreatedDesc: (name: string, role: string) => `${name} (${role}) has been created`,
+    existingUsers: "Existing users",
+    existingUsersDesc: "View and manage all user accounts",
+    userDeleted: "User deleted",
+    confirmDeleteUser: "Delete user?",
+    confirmDeleteUserDesc: (email: string) => `Are you sure you want to delete ${email}? This action cannot be undone.`,
+    resetPassword: "Reset password",
+    resetPasswordFor: (email: string) => `Reset password for ${email}`,
+    changeRole: "Change role",
+    changeRoleFor: (email: string) => `Change role for ${email}`,
+    roleUpdated: "Role updated",
+    noUsersFound: "No users found",
 
     // AI Assessment
     assessCandidate: "AI Assessment",
@@ -230,6 +241,17 @@ const translations = {
     creatingAccount: "Skapar...",
     accountCreated: "Konto skapat",
     accountCreatedDesc: (name: string, role: string) => `${name} (${role}) har skapats`,
+    existingUsers: "Befintliga användare",
+    existingUsersDesc: "Visa och hantera alla användarkonton",
+    userDeleted: "Användare raderad",
+    confirmDeleteUser: "Radera användare?",
+    confirmDeleteUserDesc: (email: string) => `Är du säker på att du vill radera ${email}? Detta kan inte ångras.`,
+    resetPassword: "Återställ lösenord",
+    resetPasswordFor: (email: string) => `Återställ lösenord för ${email}`,
+    changeRole: "Ändra roll",
+    changeRoleFor: (email: string) => `Ändra roll för ${email}`,
+    roleUpdated: "Roll uppdaterad",
+    noUsersFound: "Inga användare hittades",
 
     assessCandidate: "AI-bedömning",
     assessing: "Bedömer...",
@@ -263,7 +285,9 @@ const translations = {
 
 export type TranslationKey = keyof typeof translations.en;
 
-type Translations = typeof translations.en | typeof translations.sv;
+type Translations = {
+  [K in keyof typeof translations.en]: (typeof translations.en)[K]  | (typeof translations.sv)[K]
+};
 
 interface LanguageContextType {
   lang: Language;
