@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 
@@ -20,36 +20,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchRoles = async (userId: string) => {
-    const { data } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId);
-    setRoles((data || []).map((r) => r.role));
-  };
+  const fetchRoles = useCallback(async (userId: string) => {
+    try {
+      const { data } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userId);
+      setRoles((data || []).map((r) => r.role));
+    } catch {
+      setRoles([]);
+    }
+  }, []);
 
   useEffect(() => {
     let mounted = true;
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        if (!mounted) return;
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          await fetchRoles(session.user.id);
-        } else {
-          setRoles([]);
-        }
-        setIsLoading(false);
-      }
-    );
-
-    // Fallback: ensure loading resolves even if onAuthStateChange doesn't fire
+    // Get initial session first
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!mounted) return;
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchRoles(session.user.id).then(() => {
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
+      if (currentUser) {
+        fetchRoles(currentUser.id).finally(() => {
           if (mounted) setIsLoading(false);
         });
       } else {
@@ -57,20 +49,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     });
 
+    // Then listen for changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        if (!mounted) return;
+        const currentUser = session?.user ?? null;
+        setUser(currentUser);
+        if (currentUser) {
+          // Use setTimeout to avoid potential deadlock with Supabase client
+          setTimeout(() => {
+            if (!mounted) return;
+            fetchRoles(currentUser.id).finally(() => {
+              if (mounted) setIsLoading(false);
+            });
+          }, 0);
+        } else {
+          setRoles([]);
+          setIsLoading(false);
+        }
+      }
+    );
+
+    // Safety timeout - never stay loading longer than 5s
+    const timeout = setTimeout(() => {
+      if (mounted) setIsLoading(false);
+    }, 5000);
+
     return () => {
       mounted = false;
       subscription.unsubscribe();
+      clearTimeout(timeout);
     };
-  }, []);
+  }, [fetchRoles]);
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = useCallback(async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
-  };
+  }, []);
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
+    setRoles([]);
+    setUser(null);
     await supabase.auth.signOut();
-  };
+  }, []);
 
   return (
     <AuthContext.Provider
