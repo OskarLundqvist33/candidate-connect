@@ -37,13 +37,11 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 }
 
 function DefaultRedirect() {
-  const { isJobSeeker, isAdmin, isEmployer, isLoading } = useAuth();
-  const { t } = useLanguage();
-  if (isLoading) return <div className="flex items-center justify-center min-h-screen text-muted-foreground">{t.loading}</div>;
+  const { isJobSeeker, isAdmin, isEmployer } = useAuth();
   if (isJobSeeker && !isAdmin && !isEmployer) {
     return <Navigate to="/job-board" replace />;
   }
-  return <AppLayout><KanbanPage /></AppLayout>;
+  return <KanbanPage />;
 }
 
 const App = () => (
