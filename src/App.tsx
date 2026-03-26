@@ -12,16 +12,19 @@ import JobsPage from "@/pages/JobsPage";
 import CandidatesPage from "@/pages/CandidatesPage";
 import AdminUsersPage from "@/pages/AdminUsersPage";
 import SettingsPage from "@/pages/SettingsPage";
+import JobBoardPage from "@/pages/JobBoardPage";
+import MyApplicationsPage from "@/pages/MyApplicationsPage";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
 
-function ProtectedRoute({ children, adminOnly = false }: { children: React.ReactNode; adminOnly?: boolean }) {
-  const { user, isLoading, isAdmin } = useAuth();
+function ProtectedRoute({ children, adminOnly = false, employerOnly = false }: { children: React.ReactNode; adminOnly?: boolean; employerOnly?: boolean }) {
+  const { user, isLoading, isAdmin, isEmployer, isJobSeeker } = useAuth();
   const { t } = useLanguage();
   if (isLoading) return <div className="flex items-center justify-center min-h-screen text-muted-foreground">{t.loading}</div>;
   if (!user) return <Navigate to="/login" replace />;
   if (adminOnly && !isAdmin) return <Navigate to="/" replace />;
+  if (employerOnly && !isAdmin && !isEmployer) return <Navigate to="/" replace />;
   return <AppLayout>{children}</AppLayout>;
 }
 
@@ -31,6 +34,14 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
   if (isLoading) return <div className="flex items-center justify-center min-h-screen text-muted-foreground">{t.loading}</div>;
   if (user) return <Navigate to="/" replace />;
   return <>{children}</>;
+}
+
+function DefaultRedirect() {
+  const { isJobSeeker, isAdmin, isEmployer } = useAuth();
+  if (isJobSeeker && !isAdmin && !isEmployer) {
+    return <Navigate to="/job-board" replace />;
+  }
+  return <KanbanPage />;
 }
 
 const App = () => (
@@ -43,9 +54,11 @@ const App = () => (
           <AuthProvider>
             <Routes>
               <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
-              <Route path="/" element={<ProtectedRoute><KanbanPage /></ProtectedRoute>} />
-              <Route path="/jobs" element={<ProtectedRoute><JobsPage /></ProtectedRoute>} />
-              <Route path="/candidates" element={<ProtectedRoute><CandidatesPage /></ProtectedRoute>} />
+              <Route path="/" element={<ProtectedRoute><DefaultRedirect /></ProtectedRoute>} />
+              <Route path="/jobs" element={<ProtectedRoute employerOnly><JobsPage /></ProtectedRoute>} />
+              <Route path="/candidates" element={<ProtectedRoute employerOnly><CandidatesPage /></ProtectedRoute>} />
+              <Route path="/job-board" element={<ProtectedRoute><JobBoardPage /></ProtectedRoute>} />
+              <Route path="/my-applications" element={<ProtectedRoute><MyApplicationsPage /></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
               <Route path="/admin/users" element={<ProtectedRoute adminOnly><AdminUsersPage /></ProtectedRoute>} />
               <Route path="*" element={<NotFound />} />
