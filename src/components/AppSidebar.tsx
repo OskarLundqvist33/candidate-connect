@@ -1,6 +1,5 @@
-import { Briefcase, Users, LayoutDashboard, LogOut, UserPlus, Settings } from "lucide-react";
+import { Briefcase, Users, LayoutDashboard, LogOut, UserPlus, Settings, Search, FileText } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
-import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
@@ -11,20 +10,28 @@ import {
 import { Button } from "@/components/ui/button";
 
 export function AppSidebar() {
-  const { isAdmin, signOut, user } = useAuth();
+  const { isAdmin, isEmployer, isJobSeeker, signOut, user } = useAuth();
   const { t } = useLanguage();
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
 
-  const mainItems = [
+  const employerItems = [
     { title: t.pipeline, url: "/", icon: LayoutDashboard },
     { title: t.jobs, url: "/jobs", icon: Briefcase },
     { title: t.candidates, url: "/candidates", icon: Users },
   ];
 
+  const jobSeekerItems = [
+    { title: t.jobBoard, url: "/job-board", icon: Search },
+    { title: t.myApplications, url: "/my-applications", icon: FileText },
+  ];
+
   const adminItems = [
     { title: t.manageAccounts, url: "/admin/users", icon: UserPlus },
   ];
+
+  // Admin sees employer menu + admin menu. Employer sees employer menu. Job seeker sees job seeker menu.
+  const mainItems = isJobSeeker && !isAdmin && !isEmployer ? jobSeekerItems : employerItems;
 
   return (
     <Sidebar collapsible="icon">

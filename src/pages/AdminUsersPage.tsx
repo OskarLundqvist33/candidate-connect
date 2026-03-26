@@ -14,6 +14,8 @@ import { Badge } from "@/components/ui/badge";
 import { UserPlus, Trash2, KeyRound, Loader2, Shield } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
+type RoleType = "admin" | "employer" | "job_seeker";
+
 interface UserInfo {
   id: string;
   email: string;
@@ -24,7 +26,6 @@ interface UserInfo {
 }
 
 async function callAdminUsers(action: string, params: Record<string, any> = {}) {
-  const { data: { session } } = await supabase.auth.getSession();
   const res = await supabase.functions.invoke("admin-users", {
     body: { action, ...params },
   });
@@ -38,29 +39,24 @@ export default function AdminUsersPage() {
   const { t } = useLanguage();
   const { user: currentUser } = useAuth();
 
-  // Create form
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
-  const [role, setRole] = useState<"admin" | "customer">("customer");
+  const [role, setRole] = useState<RoleType>("employer");
   const [loading, setLoading] = useState(false);
 
-  // User list
   const [users, setUsers] = useState<UserInfo[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
 
-  // Delete dialog
   const [deleteUser, setDeleteUser] = useState<UserInfo | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  // Password dialog
   const [pwUser, setPwUser] = useState<UserInfo | null>(null);
   const [newPw, setNewPw] = useState("");
   const [changingPw, setChangingPw] = useState(false);
 
-  // Role change dialog
   const [roleUser, setRoleUser] = useState<UserInfo | null>(null);
-  const [newRole, setNewRole] = useState<"admin" | "customer">("customer");
+  const [newRole, setNewRole] = useState<RoleType>("employer");
   const [changingRole, setChangingRole] = useState(false);
 
   const fetchUsers = async () => {
@@ -74,9 +70,14 @@ export default function AdminUsersPage() {
     }
   };
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+  useEffect(() => { fetchUsers(); }, []);
+
+  const roleLabel = (r: string) => {
+    if (r === "admin") return t.roleAdmin;
+    if (r === "employer") return t.roleEmployer;
+    if (r === "job_seeker") return t.roleJobSeeker;
+    return t.roleCustomer; // fallback for old 'customer'
+  };
 
   const handleCreate = async () => {
     if (!email || !password || !fullName) {
@@ -94,8 +95,8 @@ export default function AdminUsersPage() {
       const { error: roleErr } = await supabase.from("user_roles").insert({ user_id: data.user.id, role });
       if (roleErr) throw roleErr;
 
-      toast({ title: t.accountCreated, description: t.accountCreatedDesc(fullName, role) });
-      setEmail(""); setPassword(""); setFullName(""); setRole("customer");
+      toast({ title: t.accountCreated, description: t.accountCreatedDesc(fullName, roleLabel(role)) });
+      setEmail(""); setPassword(""); setFullName(""); setRole("employer");
       fetchUsers();
     } catch (err: any) {
       toast({ title: t.error, description: err.message, variant: "destructive" });
@@ -159,7 +160,6 @@ export default function AdminUsersPage() {
         <p className="text-muted-foreground text-sm">{t.adminSubtitle}</p>
       </div>
 
-      {/* Create new account */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2"><UserPlus className="h-5 w-5" />{t.createNewAccount}</CardTitle>
@@ -181,10 +181,11 @@ export default function AdminUsersPage() {
             </div>
             <div className="space-y-2">
               <Label>{t.roleLabel}</Label>
-              <Select value={role} onValueChange={(v: "admin" | "customer") => setRole(v)}>
+              <Select value={role} onValueChange={(v: RoleType) => setRole(v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="customer">{t.roleCustomer}</SelectItem>
+                  <SelectItem value="employer">{t.roleEmployer}</SelectItem>
+                  <SelectItem value="job_seeker">{t.roleJobSeeker}</SelectItem>
                   <SelectItem value="admin">{t.roleAdmin}</SelectItem>
                 </SelectContent>
               </Select>
@@ -197,7 +198,6 @@ export default function AdminUsersPage() {
         </CardContent>
       </Card>
 
-      {/* Existing users */}
       <Card>
         <CardHeader>
           <CardTitle>{t.existingUsers}</CardTitle>
@@ -226,30 +226,20 @@ export default function AdminUsersPage() {
                       <TableCell>{u.email}</TableCell>
                       <TableCell>
                         <Badge variant={u.role === "admin" ? "default" : "secondary"}>
-                          {u.role === "admin" ? t.roleAdmin : t.roleCustomer}
+                          {roleLabel(u.role)}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right space-x-1">
-                        <Button
-                          variant="ghost" size="icon"
-                          title={t.changeRole}
-                          onClick={() => { setRoleUser(u); setNewRole(u.role as any); }}
-                        >
+                        <Button variant="ghost" size="icon" title={t.changeRole}
+                          onClick={() => { setRoleUser(u); setNewRole(u.role as RoleType); }}>
                           <Shield className="h-4 w-4" />
                         </Button>
-                        <Button
-                          variant="ghost" size="icon"
-                          title={t.resetPassword}
-                          onClick={() => { setPwUser(u); setNewPw(""); }}
-                        >
+                        <Button variant="ghost" size="icon" title={t.resetPassword}
+                          onClick={() => { setPwUser(u); setNewPw(""); }}>
                           <KeyRound className="h-4 w-4" />
                         </Button>
-                        <Button
-                          variant="ghost" size="icon"
-                          title={t.delete}
-                          disabled={u.id === currentUser?.id}
-                          onClick={() => setDeleteUser(u)}
-                        >
+                        <Button variant="ghost" size="icon" title={t.delete}
+                          disabled={u.id === currentUser?.id} onClick={() => setDeleteUser(u)}>
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
                       </TableCell>
@@ -257,9 +247,7 @@ export default function AdminUsersPage() {
                   ))}
                   {users.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
-                        {t.noUsersFound}
-                      </TableCell>
+                      <TableCell colSpan={4} className="text-center text-muted-foreground py-8">{t.noUsersFound}</TableCell>
                     </TableRow>
                   )}
                 </TableBody>
@@ -269,31 +257,24 @@ export default function AdminUsersPage() {
         </CardContent>
       </Card>
 
-      {/* Delete confirmation */}
       <AlertDialog open={!!deleteUser} onOpenChange={(o) => !o && setDeleteUser(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t.confirmDeleteUser}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t.confirmDeleteUserDesc(deleteUser?.email || "")}
-            </AlertDialogDescription>
+            <AlertDialogDescription>{t.confirmDeleteUserDesc(deleteUser?.email || "")}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{t.cancel}</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} disabled={deleting}>
-              {deleting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-              {t.delete}
+              {deleting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}{t.delete}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Password reset dialog */}
       <Dialog open={!!pwUser} onOpenChange={(o) => !o && setPwUser(null)}>
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t.resetPasswordFor(pwUser?.email || "")}</DialogTitle>
-          </DialogHeader>
+          <DialogHeader><DialogTitle>{t.resetPasswordFor(pwUser?.email || "")}</DialogTitle></DialogHeader>
           <div className="space-y-2">
             <Label>{t.newPassword}</Label>
             <Input type="password" value={newPw} onChange={(e) => setNewPw(e.target.value)} placeholder="Min 6 tecken" />
@@ -301,25 +282,22 @@ export default function AdminUsersPage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setPwUser(null)}>{t.cancel}</Button>
             <Button onClick={handleChangePassword} disabled={changingPw || newPw.length < 6}>
-              {changingPw && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-              {t.changePassword}
+              {changingPw && <Loader2 className="h-4 w-4 animate-spin mr-2" />}{t.changePassword}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Role change dialog */}
       <Dialog open={!!roleUser} onOpenChange={(o) => !o && setRoleUser(null)}>
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t.changeRoleFor(roleUser?.email || "")}</DialogTitle>
-          </DialogHeader>
+          <DialogHeader><DialogTitle>{t.changeRoleFor(roleUser?.email || "")}</DialogTitle></DialogHeader>
           <div className="space-y-2">
             <Label>{t.roleLabel}</Label>
-            <Select value={newRole} onValueChange={(v: "admin" | "customer") => setNewRole(v)}>
+            <Select value={newRole} onValueChange={(v: RoleType) => setNewRole(v)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="customer">{t.roleCustomer}</SelectItem>
+                <SelectItem value="employer">{t.roleEmployer}</SelectItem>
+                <SelectItem value="job_seeker">{t.roleJobSeeker}</SelectItem>
                 <SelectItem value="admin">{t.roleAdmin}</SelectItem>
               </SelectContent>
             </Select>
@@ -327,8 +305,7 @@ export default function AdminUsersPage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setRoleUser(null)}>{t.cancel}</Button>
             <Button onClick={handleChangeRole} disabled={changingRole}>
-              {changingRole && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-              {t.saveChanges}
+              {changingRole && <Loader2 className="h-4 w-4 animate-spin mr-2" />}{t.saveChanges}
             </Button>
           </DialogFooter>
         </DialogContent>

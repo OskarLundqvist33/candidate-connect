@@ -101,6 +101,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         roles,
         isAdmin: roles.includes("admin"),
+        isEmployer: roles.includes("employer") || roles.includes("customer"),
+        isJobSeeker: roles.includes("job_seeker"),
         isLoading,
         signIn,
         signOut,

@@ -32,6 +32,8 @@ const translations = {
     candidates: "Candidates",
     manageAccounts: "Manage accounts",
     admin: "Admin",
+    jobBoard: "Job Board",
+    myApplications: "My Applications",
 
     // Kanban
     kanbanTitle: "Pipeline",
@@ -94,12 +96,14 @@ const translations = {
 
     // Admin
     adminTitle: "Manage accounts",
-    adminSubtitle: "Create new admin and customer accounts",
+    adminSubtitle: "Create new accounts for admins, employers and job seekers",
     createNewAccount: "Create new account",
     accountEmailConfirm: "The user will receive an email to confirm the account",
     roleLabel: "Role",
-    roleCustomer: "Customer",
+    roleCustomer: "Employer",
     roleAdmin: "Admin",
+    roleEmployer: "Employer",
+    roleJobSeeker: "Job Seeker",
     createAccount: "Create account",
     creatingAccount: "Creating...",
     accountCreated: "Account created",
@@ -146,6 +150,30 @@ const translations = {
     passwordChanged: "Password changed",
     passwordTooShort: "Password must be at least 6 characters",
     passwordsMismatch: "Passwords do not match",
+
+    // Job Board (Job Seeker)
+    jobBoardTitle: "Job Board",
+    jobBoardSubtitle: "Browse and apply to open positions",
+    applyNow: "Apply",
+    alreadyApplied: "Applied",
+    applyTo: "Apply to",
+    coverLetterLabel: "Cover letter",
+    coverLetterPlaceholder: "Tell us why you're a great fit...",
+    uploadCV: "Upload CV",
+    submitApplication: "Submit application",
+    applicationSent: "Application submitted!",
+    noOpenJobs: "No open jobs at the moment.",
+
+    // My Applications
+    myApplicationsTitle: "My Applications",
+    myApplicationsSubtitle: "Track the status of your job applications",
+    applicationStatus: "Status",
+    appliedDate: "Applied",
+    noApplicationsYet: "You haven't applied to any jobs yet.",
+    status_pending: "Pending",
+    status_reviewed: "Reviewed",
+    status_accepted: "Accepted",
+    status_rejected: "Rejected",
   },
   sv: {
     loading: "Laddar...",
@@ -173,6 +201,8 @@ const translations = {
     candidates: "Kandidater",
     manageAccounts: "Hantera konton",
     admin: "Admin",
+    jobBoard: "Lediga jobb",
+    myApplications: "Mina ansökningar",
 
     kanbanTitle: "Pipeline",
     kanbanSubtitle: "Drag kandidater mellan steg för att uppdatera deras status",
@@ -231,12 +261,14 @@ const translations = {
     fillAllFields: "Fyll i alla fält",
 
     adminTitle: "Hantera konton",
-    adminSubtitle: "Skapa nya admin- och kundkonton",
+    adminSubtitle: "Skapa nya konton för admins, arbetsgivare och arbetssökande",
     createNewAccount: "Skapa nytt konto",
     accountEmailConfirm: "Användaren får ett e-postmeddelande för att bekräfta kontot",
     roleLabel: "Roll",
-    roleCustomer: "Kund",
+    roleCustomer: "Arbetsgivare",
     roleAdmin: "Admin",
+    roleEmployer: "Arbetsgivare",
+    roleJobSeeker: "Arbetssökande",
     createAccount: "Skapa konto",
     creatingAccount: "Skapar...",
     accountCreated: "Konto skapat",
@@ -280,13 +312,37 @@ const translations = {
     passwordChanged: "Lösenord ändrat",
     passwordTooShort: "Lösenordet måste vara minst 6 tecken",
     passwordsMismatch: "Lösenorden matchar inte",
+
+    // Job Board
+    jobBoardTitle: "Lediga jobb",
+    jobBoardSubtitle: "Bläddra och sök till öppna tjänster",
+    applyNow: "Ansök",
+    alreadyApplied: "Ansökt",
+    applyTo: "Ansök till",
+    coverLetterLabel: "Personligt brev",
+    coverLetterPlaceholder: "Berätta varför du passar för tjänsten...",
+    uploadCV: "Ladda upp CV",
+    submitApplication: "Skicka ansökan",
+    applicationSent: "Ansökan skickad!",
+    noOpenJobs: "Inga lediga jobb just nu.",
+
+    // My Applications
+    myApplicationsTitle: "Mina ansökningar",
+    myApplicationsSubtitle: "Följ statusen på dina jobbansökningar",
+    applicationStatus: "Status",
+    appliedDate: "Ansökt",
+    noApplicationsYet: "Du har inte ansökt till några jobb ännu.",
+    status_pending: "Väntande",
+    status_reviewed: "Granskad",
+    status_accepted: "Accepterad",
+    status_rejected: "Avvisad",
   },
 } as const;
 
 export type TranslationKey = keyof typeof translations.en;
 
 type Translations = {
-  [K in keyof typeof translations.en]: (typeof translations.en)[K]  | (typeof translations.sv)[K]
+  [K in keyof typeof translations.en]: (typeof translations.en)[K] | (typeof translations.sv)[K]
 };
 
 interface LanguageContextType {
