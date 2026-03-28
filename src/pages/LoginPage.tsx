@@ -47,7 +47,7 @@ export default function LoginPage() {
     }
     setRegLoading(true);
     try {
-      const { data, error } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email: regEmail,
         password: regPassword,
         options: {
@@ -56,11 +56,6 @@ export default function LoginPage() {
         },
       });
       if (error) throw error;
-
-      // Insert role for new user
-      if (data.user) {
-        await supabase.from("user_roles").insert({ user_id: data.user.id, role: regRole } as any);
-      }
 
       toast({
         title: t.accountCreated,
