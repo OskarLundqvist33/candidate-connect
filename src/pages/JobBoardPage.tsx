@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { MapPin, Send, Loader2, Upload } from "lucide-react";
+import { MapPin, Send, Loader2, Upload, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 type Job = {
@@ -31,12 +31,25 @@ export default function JobBoardPage() {
   const [cvFile, setCvFile] = useState<File | null>(null);
   const [applying, setApplying] = useState(false);
   const [appliedJobIds, setAppliedJobIds] = useState<Set<string>>(new Set());
+  const [savedCvPath, setSavedCvPath] = useState<string | null>(null);
+  const [savedCvName, setSavedCvName] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
     fetchJobs();
     fetchMyApplications();
+    loadSavedCv();
   }, [user]);
+
+  const loadSavedCv = async () => {
+    if (!user) return;
+    const { data } = await supabase.storage.from("cv-uploads").list(user.id + "/profile", { limit: 1, sortBy: { column: "created_at", order: "desc" } });
+    if (data && data.length > 0) {
+      const file = data[0];
+      setSavedCvPath(`${user.id}/profile/${file.name}`);
+      setSavedCvName(file.name.replace(/^\d+_/, ""));
+    }
+  };
 
   const fetchJobs = async () => {
     const { data } = await supabase.from("jobs").select("*").eq("status", "open").order("created_at", { ascending: false });
@@ -59,6 +72,8 @@ export default function JobBoardPage() {
         const { error: uploadErr } = await supabase.storage.from("cv-uploads").upload(path, cvFile);
         if (uploadErr) throw uploadErr;
         cvUrl = path;
+      } else if (savedCvPath) {
+        cvUrl = savedCvPath;
       }
 
       const { error } = await supabase.from("applications").insert({
@@ -130,6 +145,12 @@ export default function JobBoardPage() {
             </div>
             <div className="space-y-2">
               <Label>{t.uploadCV}</Label>
+              {savedCvPath && !cvFile && (
+                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <FileText className="h-3 w-3" />
+                  {savedCvName} (from settings)
+                </p>
+              )}
               <Input type="file" accept=".pdf,.doc,.docx" onChange={(e) => setCvFile(e.target.files?.[0] || null)} />
             </div>
             <Button onClick={handleApply} className="w-full" disabled={applying}>

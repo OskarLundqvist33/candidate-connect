@@ -21,13 +21,15 @@ Deno.serve(async (req) => {
     const userClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
-    const { data: { user } } = await userClient.auth.getUser();
-    if (!user) throw new Error("Unauthorized");
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsErr } = await userClient.auth.getClaims(token);
+    if (claimsErr || !claimsData?.claims) throw new Error("Unauthorized");
+    const userId = claimsData.claims.sub as string;
 
     const { data: roleCheck } = await supabase
       .from("user_roles")
       .select("role")
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .eq("role", "admin")
       .maybeSingle();
     if (!roleCheck) throw new Error("Forbidden: admin only");
@@ -58,7 +60,7 @@ Deno.serve(async (req) => {
 
     if (action === "delete") {
       const { userId } = params;
-      if (userId === user.id) throw new Error("Cannot delete yourself");
+      if (params.userId === userId) throw new Error("Cannot delete yourself");
       const { error } = await supabase.auth.admin.deleteUser(userId);
       if (error) throw error;
       return new Response(JSON.stringify({ success: true }), {
