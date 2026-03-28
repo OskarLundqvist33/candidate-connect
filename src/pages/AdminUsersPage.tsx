@@ -87,13 +87,10 @@ export default function AdminUsersPage() {
     setLoading(true);
     try {
       const { data, error } = await supabase.auth.signUp({
-        email, password, options: { data: { full_name: fullName } },
+        email, password, options: { data: { full_name: fullName, role } },
       });
       if (error) throw error;
       if (!data.user) throw new Error("No user created");
-
-      const { error: roleErr } = await supabase.from("user_roles").insert({ user_id: data.user.id, role });
-      if (roleErr) throw roleErr;
 
       toast({ title: t.accountCreated, description: t.accountCreatedDesc(fullName, roleLabel(role)) });
       setEmail(""); setPassword(""); setFullName(""); setRole("employer");
