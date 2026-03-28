@@ -3,32 +3,63 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Loader2, Sparkles } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface ApplicationWithJob {
   id: string;
   status: string;
   created_at: string;
+  cv_url: string | null;
   jobs: { title: string; location: string | null } | null;
 }
 
 export default function MyApplicationsPage() {
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
+  const { toast } = useToast();
   const [applications, setApplications] = useState<ApplicationWithJob[]>([]);
+  const [feedbackApp, setFeedbackApp] = useState<ApplicationWithJob | null>(null);
+  const [feedback, setFeedback] = useState<string>("");
+  const [analyzingId, setAnalyzingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
     const fetch = async () => {
       const { data } = await supabase
         .from("applications")
-        .select("id, status, created_at, jobs(title, location)")
+        .select("id, status, created_at, cv_url, jobs(title, location)")
         .eq("applicant_id", user.id)
         .order("created_at", { ascending: false });
       if (data) setApplications(data as any);
     };
     fetch();
   }, [user]);
+
+  const handleGetFeedback = async (app: ApplicationWithJob) => {
+    if (!app.cv_url) {
+      toast({ title: t.error, description: t.noCvUploaded, variant: "destructive" });
+      return;
+    }
+    setAnalyzingId(app.id);
+    setFeedbackApp(app);
+    setFeedback("");
+    try {
+      const { data, error } = await supabase.functions.invoke("assess-cv", {
+        body: { cv_url: app.cv_url, language: lang },
+      });
+      if (error) throw error;
+      setFeedback(data.feedback);
+    } catch (err: any) {
+      toast({ title: t.error, description: err.message, variant: "destructive" });
+      setFeedbackApp(null);
+    } finally {
+      setAnalyzingId(null);
+    }
+  };
 
   const statusBadge = (s: string) => {
     const map: Record<string, string> = {
@@ -55,6 +86,7 @@ export default function MyApplicationsPage() {
               <TableHead>{t.jobLocation}</TableHead>
               <TableHead>{t.applicationStatus}</TableHead>
               <TableHead>{t.appliedDate}</TableHead>
+              <TableHead>{t.cvFeedback}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -68,11 +100,30 @@ export default function MyApplicationsPage() {
                 <TableCell className="text-muted-foreground">
                   {new Date(a.created_at).toLocaleDateString()}
                 </TableCell>
+                <TableCell>
+                  {a.cv_url ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleGetFeedback(a)}
+                      disabled={analyzingId === a.id}
+                    >
+                      {analyzingId === a.id ? (
+                        <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
+                      ) : (
+                        <Sparkles className="h-3.5 w-3.5 mr-1" />
+                      )}
+                      {analyzingId === a.id ? t.analyzingCv : t.getCvFeedback}
+                    </Button>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">—</span>
+                  )}
+                </TableCell>
               </TableRow>
             ))}
             {applications.length === 0 && (
               <TableRow>
-                <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                   {t.noApplicationsYet}
                 </TableCell>
               </TableRow>
@@ -80,6 +131,26 @@ export default function MyApplicationsPage() {
           </TableBody>
         </Table>
       </div>
+
+      <Dialog open={!!feedbackApp} onOpenChange={(o) => !o && setFeedbackApp(null)}>
+        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" />
+              {t.cvFeedbackTitle}
+            </DialogTitle>
+          </DialogHeader>
+          {feedback ? (
+            <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap">
+              {feedback}
+            </div>
+          ) : (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

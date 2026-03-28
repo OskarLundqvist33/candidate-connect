@@ -16,7 +16,7 @@ type Candidate = Database["public"]["Tables"]["candidates"]["Row"];
 type JobCandidate = Database["public"]["Tables"]["job_candidates"]["Row"];
 
 export default function KanbanPage() {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const { t } = useLanguage();
   const { toast } = useToast();
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -134,7 +134,7 @@ export default function KanbanPage() {
                   const job = getJobById(jc.job_id);
                   if (!candidate) return null;
                   return (
-                    <div key={jc.id} className="kanban-card animate-slide-in" draggable onDragStart={(e) => handleDragStart(e, jc.id)}>
+                    <div key={jc.id} className="kanban-card animate-slide-in" draggable={isAdmin} onDragStart={(e) => isAdmin && handleDragStart(e, jc.id)}>
                       <div className="flex items-start gap-2">
                         <GripVertical className="h-4 w-4 text-muted-foreground/40 mt-0.5 flex-shrink-0" />
                         <div className="min-w-0 flex-1">

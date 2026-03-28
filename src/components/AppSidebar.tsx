@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 
 export function AppSidebar() {
-  const { isAdmin, isEmployer, isJobSeeker, signOut, user } = useAuth();
+  const { isAdmin, isEmployer, isJobSeeker, signOut, user, isLoading } = useAuth();
   const { t } = useLanguage();
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
@@ -30,8 +30,12 @@ export function AppSidebar() {
     { title: t.manageAccounts, url: "/admin/users", icon: UserPlus },
   ];
 
-  // Admin sees employer menu + admin menu. Employer sees employer menu. Job seeker sees job seeker menu.
-  const mainItems = isJobSeeker && !isAdmin && !isEmployer ? jobSeekerItems : employerItems;
+  // Wait for roles to load before deciding menu. Default to empty to avoid showing wrong items.
+  const mainItems = isLoading
+    ? []
+    : isJobSeeker && !isAdmin && !isEmployer
+      ? jobSeekerItems
+      : employerItems;
 
   return (
     <Sidebar collapsible="icon">
