@@ -38,7 +38,18 @@ export default function JobBoardPage() {
     if (!user) return;
     fetchJobs();
     fetchMyApplications();
+    loadSavedCv();
   }, [user]);
+
+  const loadSavedCv = async () => {
+    if (!user) return;
+    const { data } = await supabase.storage.from("cv-uploads").list(user.id + "/profile", { limit: 1, sortBy: { column: "created_at", order: "desc" } });
+    if (data && data.length > 0) {
+      const file = data[0];
+      setSavedCvPath(`${user.id}/profile/${file.name}`);
+      setSavedCvName(file.name.replace(/^\d+_/, ""));
+    }
+  };
 
   const fetchJobs = async () => {
     const { data } = await supabase.from("jobs").select("*").eq("status", "open").order("created_at", { ascending: false });
