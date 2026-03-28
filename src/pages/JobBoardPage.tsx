@@ -145,6 +145,12 @@ export default function JobBoardPage() {
             </div>
             <div className="space-y-2">
               <Label>{t.uploadCV}</Label>
+              {savedCvPath && !cvFile && (
+                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <FileText className="h-3 w-3" />
+                  {savedCvName} (from settings)
+                </p>
+              )}
               <Input type="file" accept=".pdf,.doc,.docx" onChange={(e) => setCvFile(e.target.files?.[0] || null)} />
             </div>
             <Button onClick={handleApply} className="w-full" disabled={applying}>
