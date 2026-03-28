@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { MapPin, Send, Loader2, Upload } from "lucide-react";
+import { MapPin, Send, Loader2, Upload, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 type Job = {
