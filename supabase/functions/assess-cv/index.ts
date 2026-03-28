@@ -19,9 +19,15 @@ serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    
+    // Create authenticated client for user context
     const supabase = createClient(supabaseUrl, supabaseKey, {
       global: { headers: { authorization: authHeader } },
     });
+
+    // Create service role client for storage operations (bypasses RLS)
+    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
     // The JWT is already verified by Supabase's RLS policies
     // The Storage will check the authorization header and apply RLS policies
@@ -30,13 +36,13 @@ serve(async (req) => {
     const { cv_url, language } = await req.json();
     if (!cv_url) throw new Error("cv_url is required");
 
-    // Download the CV file from storage
-    const { data: fileData, error: downloadError } = await supabase.storage
-
+    // Download the CV file from storage using service role (bypasses RLS)
+    console.log("Downloading CV from path:", cv_url);
+    const { data: fileData, error: downloadError } = await supabaseAdmin.storage
       .from("cv-uploads")
       .download(cv_url);
     if (downloadError) {
-      console.log("Download error:", downloadError);
+      console.error("Download error:", downloadError);
       throw downloadError;
     }
 
