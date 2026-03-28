@@ -186,6 +186,19 @@ const translations = {
     analyzingCv: "Analyzing...",
     noCvUploaded: "No CV uploaded for this application.",
     cvFeedbackTitle: "AI CV Feedback",
+
+    // CV Settings
+    myCvTitle: "My CV",
+    myCvDesc: "Upload your CV to automatically attach it when applying for jobs",
+    currentCv: "Current CV",
+    noCvYet: "No CV uploaded yet",
+    uploadNewCv: "Upload CV",
+    replaceCv: "Replace CV",
+    cvUploaded: "CV uploaded successfully",
+    cvRemoved: "CV removed",
+    removeCv: "Remove",
+    getAiFeedback: "Get AI Feedback",
+    aiFeedbackTitle: "AI CV Feedback",
   },
   sv: {
     loading: "Laddar...",
@@ -360,6 +373,19 @@ const translations = {
     analyzingCv: "Analyserar...",
     noCvUploaded: "Inget CV uppladdat för denna ansökan.",
     cvFeedbackTitle: "AI CV-feedback",
+
+    // CV Settings
+    myCvTitle: "Mitt CV",
+    myCvDesc: "Ladda upp ditt CV för att automatiskt bifoga det vid jobbansökningar",
+    currentCv: "Nuvarande CV",
+    noCvYet: "Inget CV uppladdat ännu",
+    uploadNewCv: "Ladda upp CV",
+    replaceCv: "Byt CV",
+    cvUploaded: "CV uppladdat",
+    cvRemoved: "CV borttaget",
+    removeCv: "Ta bort",
+    getAiFeedback: "Få AI-feedback",
+    aiFeedbackTitle: "AI CV-feedback",
   },
 } as const;
 
