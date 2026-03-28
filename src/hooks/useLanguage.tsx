@@ -174,6 +174,18 @@ const translations = {
     status_reviewed: "Reviewed",
     status_accepted: "Accepted",
     status_rejected: "Rejected",
+
+    // Registration
+    register: "Register",
+    registerAsLabel: "Register as",
+    registrationSuccess: "Account created! Please check your email to confirm.",
+
+    // CV Feedback
+    cvFeedback: "CV Feedback",
+    getCvFeedback: "Get AI Feedback",
+    analyzingCv: "Analyzing...",
+    noCvUploaded: "No CV uploaded for this application.",
+    cvFeedbackTitle: "AI CV Feedback",
   },
   sv: {
     loading: "Laddar...",
@@ -336,6 +348,18 @@ const translations = {
     status_reviewed: "Granskad",
     status_accepted: "Accepterad",
     status_rejected: "Avvisad",
+
+    // Registration
+    register: "Registrera",
+    registerAsLabel: "Registrera som",
+    registrationSuccess: "Konto skapat! Kolla din e-post för att bekräfta.",
+
+    // CV Feedback
+    cvFeedback: "CV-feedback",
+    getCvFeedback: "Få AI-feedback",
+    analyzingCv: "Analyserar...",
+    noCvUploaded: "Inget CV uppladdat för denna ansökan.",
+    cvFeedbackTitle: "AI CV-feedback",
   },
 } as const;
 
