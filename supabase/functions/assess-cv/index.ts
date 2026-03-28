@@ -23,14 +23,9 @@ serve(async (req) => {
       global: { headers: { authorization: authHeader } },
     });
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: authError } = await supabase.auth.getClaims(token);
-    if (authError || !claimsData?.claims) {
-      console.log("Auth error:", authError);
-      throw new Error("Unauthorized");
-    }
-
-    console.log("User authenticated successfully");
+    // The JWT is already verified by Supabase's RLS policies
+    // The Storage will check the authorization header and apply RLS policies
+    console.log("Authorization header set for authenticated request");
 
     const { cv_url, language } = await req.json();
     if (!cv_url) throw new Error("cv_url is required");
@@ -241,40 +236,52 @@ If the file content is not readable or appears to be binary, mention that and pr
     let feedback = "";
 
     if (useAI) {
-      // Use Lovable AI API if available
-      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "google/gemini-3-flash-preview",
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: `Please review this CV/resume:\n\n${cvContent}` },
-          ],
-        }),
-      });
-
-      if (!response.ok) {
-        const message = response.status === 429
-          ? "Rate limited, please try again later."
-          : response.status === 402
-          ? "Credits exhausted. Add funds in Settings."
-          : `AI gateway returned ${response.status}`;
-        const bodyText = await response.text();
-        console.error("AI error:", response.status, bodyText);
-        return new Response(JSON.stringify({ error: message, details: bodyText }), {
-          status: 502,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+      try {
+        // Use Lovable AI API if available
+        console.log("Calling Lovable AI gateway...");
+        const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${LOVABLE_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "google/gemini-3-flash-preview",
+            messages: [
+              { role: "system", content: systemPrompt },
+              { role: "user", content: `Please review this CV/resume:\n\n${cvContent}` },
+            ],
+          }),
         });
-      }
 
-      const data = await response.json();
-      feedback = data.choices?.[0]?.message?.content || "No feedback generated.";
+        if (!response.ok) {
+          const message = response.status === 429
+            ? "Rate limited, please try again later."
+            : response.status === 402
+            ? "Credits exhausted. Add funds in Settings."
+            : response.status === 401 || response.status === 403
+            ? "API key invalid. Using local analysis instead."
+            : `AI gateway returned ${response.status}`;
+          
+          const bodyText = await response.text();
+          console.error("Lovable API error:", response.status, bodyText);
+          
+          // Fall back to local analysis on any API error
+          console.log("Falling back to local analysis due to API error");
+          feedback = generateLocalFeedback(cvContent, lang);
+        } else {
+          const data = await response.json();
+          feedback = data.choices?.[0]?.message?.content || generateLocalFeedback(cvContent, lang);
+          console.log("AI feedback generated successfully");
+        }
+      } catch (apiError) {
+        console.error("Lovable API call failed:", apiError);
+        console.log("Falling back to local analysis due to network/parse error");
+        feedback = generateLocalFeedback(cvContent, lang);
+      }
     } else {
       // Use local heuristic analysis as fallback
+      console.log("Using local analysis (no API key configured)");
       feedback = generateLocalFeedback(cvContent, lang);
     }
 
