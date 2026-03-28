@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
 
     if (action === "delete") {
       const { userId } = params;
-      if (userId === user.id) throw new Error("Cannot delete yourself");
+      if (params.userId === userId) throw new Error("Cannot delete yourself");
       const { error } = await supabase.auth.admin.deleteUser(userId);
       if (error) throw error;
       return new Response(JSON.stringify({ success: true }), {
