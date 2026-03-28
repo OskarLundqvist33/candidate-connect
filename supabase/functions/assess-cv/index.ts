@@ -36,9 +36,49 @@ serve(async (req) => {
       .download(cv_url);
     if (downloadError) throw downloadError;
 
-    // Extract text from the file (works for text-based files, PDF text layer)
-    const text = await fileData.text();
-    const cvContent = text.length > 5000 ? text.substring(0, 5000) : text;
+    const isPdf = cv_url.toString().toLowerCase().endsWith(".pdf");
+    const isDocx = cv_url.toString().toLowerCase().endsWith(".docx");
+    const isDoc = cv_url.toString().toLowerCase().endsWith(".doc");
+
+    const extractTextFromPdf = (bytes: Uint8Array) => {
+      const raw = Array.from(bytes)
+        .map((b) => String.fromCharCode(b))
+        .join("");
+      const matches = raw.match(/\(([^\)]+)\)/g);
+      if (!matches) return "";
+      return matches
+        .map((m) => m.slice(1, -1))
+        .join(" ")
+        .replace(/\s+/g, " ")
+        .trim();
+    };
+
+    let cvContent = "";
+
+    if (isPdf) {
+      try {
+        const arrayBuffer = await fileData.arrayBuffer();
+        cvContent = extractTextFromPdf(new Uint8Array(arrayBuffer));
+      } catch {
+        cvContent = "";
+      }
+    }
+
+    if (!cvContent) {
+      try {
+        const text = await fileData.text();
+        cvContent = text;
+      } catch {
+        cvContent = "";
+      }
+    }
+
+    if (!cvContent || cvContent.trim().length === 0) {
+      const format = isPdf ? "PDF" : isDocx ? "DOCX" : isDoc ? "DOC" : "unknown";
+      cvContent = `Uploaded CV is ${format} and could not be parsed as text. Provide general feedback on this format and suggest converting to a text-based resume if needed.`;
+    } else {
+      cvContent = cvContent.length > 5000 ? cvContent.substring(0, 5000) : cvContent;
+    }
 
     const lang = language === "sv" ? "Swedish" : "English";
 
@@ -68,14 +108,17 @@ If the file content is not readable or appears to be binary, mention that and pr
     });
 
     if (!response.ok) {
-      if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limited, please try again later." }), {
-          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      const t = await response.text();
-      console.error("AI error:", response.status, t);
-      throw new Error("AI gateway error");
+      const message = response.status === 429
+        ? "Rate limited, please try again later."
+        : response.status === 402
+        ? "Credits exhausted. Add funds in Settings."
+        : `AI gateway returned ${response.status}`;
+      const bodyText = await response.text();
+      console.error("AI error:", response.status, bodyText);
+      return new Response(JSON.stringify({ error: message, details: bodyText }), {
+        status: 502,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const data = await response.json();
