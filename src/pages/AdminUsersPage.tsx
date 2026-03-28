@@ -79,6 +79,13 @@ export default function AdminUsersPage() {
     return t.roleCustomer; // fallback for old 'customer'
   };
 
+  const getRoleBadgeVariant = (role: string) => {
+    if (role === "admin") return "default"; // blue
+    if (role === "employer") return "destructive"; // red
+    if (role === "job_seeker") return "success"; // green
+    return "secondary"; // grey fallback
+  };
+
   const handleCreate = async () => {
     if (!email || !password || !fullName) {
       toast({ title: t.fillAllFields, variant: "destructive" });
@@ -222,7 +229,7 @@ export default function AdminUsersPage() {
                       <TableCell className="font-medium">{u.full_name || "—"}</TableCell>
                       <TableCell>{u.email}</TableCell>
                       <TableCell>
-                        <Badge variant={u.role === "admin" ? "default" : "secondary"}>
+                        <Badge variant={getRoleBadgeVariant(u.role)}>
                           {roleLabel(u.role)}
                         </Badge>
                       </TableCell>
