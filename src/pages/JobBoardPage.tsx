@@ -31,6 +31,8 @@ export default function JobBoardPage() {
   const [cvFile, setCvFile] = useState<File | null>(null);
   const [applying, setApplying] = useState(false);
   const [appliedJobIds, setAppliedJobIds] = useState<Set<string>>(new Set());
+  const [savedCvPath, setSavedCvPath] = useState<string | null>(null);
+  const [savedCvName, setSavedCvName] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
