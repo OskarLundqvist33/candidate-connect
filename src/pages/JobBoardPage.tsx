@@ -72,6 +72,8 @@ export default function JobBoardPage() {
         const { error: uploadErr } = await supabase.storage.from("cv-uploads").upload(path, cvFile);
         if (uploadErr) throw uploadErr;
         cvUrl = path;
+      } else if (savedCvPath) {
+        cvUrl = savedCvPath;
       }
 
       const { error } = await supabase.from("applications").insert({
