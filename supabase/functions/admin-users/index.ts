@@ -16,20 +16,17 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
     // Verify caller is admin
-    const authHeader = req.headers.get("Authorization")!;
-    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const userClient = createClient(supabaseUrl, anonKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) throw new Error("Unauthorized");
     const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsErr } = await userClient.auth.getClaims(token);
-    if (claimsErr || !claimsData?.claims) throw new Error("Unauthorized");
-    const userId = claimsData.claims.sub as string;
+    const { data: userData, error: userErr } = await supabase.auth.getUser(token);
+    if (userErr || !userData?.user) throw new Error("Unauthorized");
+    const callerUserId = userData.user.id;
 
     const { data: roleCheck } = await supabase
       .from("user_roles")
       .select("role")
-      .eq("user_id", userId)
+      .eq("user_id", callerUserId)
       .eq("role", "admin")
       .maybeSingle();
     if (!roleCheck) throw new Error("Forbidden: admin only");
@@ -59,9 +56,9 @@ Deno.serve(async (req) => {
     }
 
     if (action === "delete") {
-      const { userId } = params;
-      if (params.userId === userId) throw new Error("Cannot delete yourself");
-      const { error } = await supabase.auth.admin.deleteUser(userId);
+      const targetUserId = params.userId;
+      if (targetUserId === callerUserId) throw new Error("Cannot delete yourself");
+      const { error } = await supabase.auth.admin.deleteUser(targetUserId);
       if (error) throw error;
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
