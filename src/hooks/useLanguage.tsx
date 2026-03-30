@@ -95,6 +95,12 @@ const translations = {
     candidateAssigned: "Candidate assigned to job",
     alreadyAssigned: "Candidate is already assigned to this job",
     fillAllFields: "Fill in all fields",
+    viewProfile: "View profile",
+    candidateProfile: "Candidate Profile",
+    scoutToJob: "Scout to job",
+    scoutSuccess: "Candidate scouted to job",
+    selectYourJob: "Select one of your jobs",
+    noOwnJobs: "You have no open jobs to scout to",
 
     // Admin
     adminTitle: "Manage accounts",
@@ -288,6 +294,12 @@ const translations = {
     candidateAssigned: "Kandidat kopplad till jobb",
     alreadyAssigned: "Kandidaten är redan kopplad till detta jobb",
     fillAllFields: "Fyll i alla fält",
+    viewProfile: "Visa profil",
+    candidateProfile: "Kandidatprofil",
+    scoutToJob: "Scouta till jobb",
+    scoutSuccess: "Kandidat scoutad till jobb",
+    selectYourJob: "Välj ett av dina jobb",
+    noOwnJobs: "Du har inga öppna jobb att scouta till",
 
     adminTitle: "Hantera konton",
     adminSubtitle: "Skapa nya konton för admins, arbetsgivare och arbetssökande",
