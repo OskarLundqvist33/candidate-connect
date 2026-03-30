@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, ExternalLink, Trash2, Pencil, UserPlus, Sparkles, Loader2 } from "lucide-react";
+import { Plus, ExternalLink, Trash2, Pencil, UserPlus, Sparkles, Loader2, Eye, Target } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -17,7 +17,7 @@ type Candidate = Database["public"]["Tables"]["candidates"]["Row"];
 type Job = Database["public"]["Tables"]["jobs"]["Row"];
 
 export default function CandidatesPage() {
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, isEmployer } = useAuth();
   const { t, lang } = useLanguage();
   const { toast } = useToast();
   const [candidates, setCandidates] = useState<Candidate[]>([]);
@@ -32,6 +32,14 @@ export default function CandidatesPage() {
   const [assessingId, setAssessingId] = useState<string | null>(null);
   const [assessment, setAssessment] = useState<string>("");
   const [assessCandidate, setAssessCandidate] = useState<Candidate | null>(null);
+
+  // View profile + scout state
+  const [profileCandidate, setProfileCandidate] = useState<Candidate | null>(null);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [scoutJobId, setScoutJobId] = useState("");
+  const [scouting, setScouting] = useState(false);
+
+  const myJobs = useMemo(() => jobs.filter((j) => j.customer_id === user?.id), [jobs, user]);
 
   useEffect(() => {
     if (user) { fetchCandidates(); fetchJobs(); }
@@ -76,6 +84,21 @@ export default function CandidatesPage() {
     toast({ title: t.candidateAssigned });
   };
 
+  const handleScout = async () => {
+    if (!user || !profileCandidate || !scoutJobId) return;
+    setScouting(true);
+    const { error } = await supabase.from("job_candidates").insert({
+      candidate_id: profileCandidate.id, job_id: scoutJobId, customer_id: user.id,
+    });
+    setScouting(false);
+    if (error) {
+      toast({ title: t.error, description: error.message.includes("duplicate") ? t.alreadyAssigned : error.message, variant: "destructive" });
+      return;
+    }
+    setScoutJobId("");
+    toast({ title: t.scoutSuccess });
+  };
+
   const handleDelete = async (id: string) => {
     await supabase.from("candidates").delete().eq("id", id);
     fetchCandidates();
@@ -100,7 +123,6 @@ export default function CandidatesPage() {
     setAssessOpen(true);
 
     try {
-      // Find jobs this candidate is assigned to
       const { data: jcData } = await supabase.from("job_candidates").select("job_id").eq("candidate_id", candidate.id).limit(1);
       let job: Job | null = null;
       if (jcData && jcData.length > 0) {
@@ -165,7 +187,7 @@ export default function CandidatesPage() {
         </Dialog>}
       </div>
 
-      {/* Assign dialog */}
+      {/* Assign dialog (admin only) */}
       <Dialog open={assignOpen} onOpenChange={setAssignOpen}>
         <DialogContent>
           <DialogHeader><DialogTitle>{t.assignToJob}</DialogTitle></DialogHeader>
@@ -183,7 +205,7 @@ export default function CandidatesPage() {
 
       {/* AI Assessment dialog */}
       <Dialog open={assessOpen} onOpenChange={setAssessOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Sparkles className="h-5 w-5 text-accent" />
@@ -202,6 +224,73 @@ export default function CandidatesPage() {
               </div>
             )}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Profile + Scout dialog */}
+      <Dialog open={profileOpen} onOpenChange={setProfileOpen}>
+        <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{t.candidateProfile}</DialogTitle>
+          </DialogHeader>
+          {profileCandidate && (
+            <div className="space-y-4 pt-2">
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">{t.nameLabel}</p>
+                <p className="font-medium">{profileCandidate.full_name}</p>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <p className="text-sm text-muted-foreground">{t.emailLabel}</p>
+                  <p className="text-sm">{profileCandidate.email || "–"}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm text-muted-foreground">{t.phoneLabel}</p>
+                  <p className="text-sm">{profileCandidate.phone || "–"}</p>
+                </div>
+              </div>
+              {profileCandidate.linkedin_url && (
+                <div className="space-y-1">
+                  <p className="text-sm text-muted-foreground">LinkedIn</p>
+                  <a href={profileCandidate.linkedin_url} target="_blank" rel="noopener noreferrer"
+                    className="text-primary hover:underline inline-flex items-center gap-1 text-sm">
+                    {profileCandidate.linkedin_url} <ExternalLink className="h-3 w-3" />
+                  </a>
+                </div>
+              )}
+              {profileCandidate.notes && (
+                <div className="space-y-1">
+                  <p className="text-sm text-muted-foreground">{t.notesLabel}</p>
+                  <p className="text-sm whitespace-pre-wrap">{profileCandidate.notes}</p>
+                </div>
+              )}
+
+              {/* Scout section for employers */}
+              {(isEmployer || isAdmin) && (
+                <div className="border-t pt-4 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Target className="h-4 w-4 text-primary" />
+                    <p className="font-medium text-sm">{t.scoutToJob}</p>
+                  </div>
+                  {myJobs.length > 0 ? (
+                    <div className="flex gap-2">
+                      <Select value={scoutJobId} onValueChange={setScoutJobId}>
+                        <SelectTrigger className="flex-1"><SelectValue placeholder={t.selectYourJob} /></SelectTrigger>
+                        <SelectContent>
+                          {myJobs.map((j) => <SelectItem key={j.id} value={j.id}>{j.title}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                      <Button onClick={handleScout} disabled={!scoutJobId || scouting} size="sm">
+                        {scouting ? <Loader2 className="h-4 w-4 animate-spin" /> : t.scoutToJob}
+                      </Button>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">{t.noOwnJobs}</p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 
@@ -231,6 +320,10 @@ export default function CandidatesPage() {
                 </TableCell>
                 <TableCell>
                   <div className="flex gap-1">
+                    {/* View profile (employers + admins) */}
+                    <Button size="icon" variant="ghost" onClick={() => { setProfileCandidate(c); setScoutJobId(""); setProfileOpen(true); }} title={t.viewProfile}>
+                      <Eye className="h-4 w-4" />
+                    </Button>
                     <Button size="icon" variant="ghost" onClick={() => handleAssess(c)} title={t.assessCandidate} disabled={assessingId === c.id}>
                       {assessingId === c.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                     </Button>
