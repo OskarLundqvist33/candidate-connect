@@ -128,7 +128,19 @@ export default function KanbanPage() {
           <SelectContent>
             <SelectItem value="all">{t.allJobs}</SelectItem>
             {isEmployer && !isAdmin && <SelectItem value="mine">{t.myJobs}</SelectItem>}
-            {jobs.map((j) => <SelectItem key={j.id} value={j.id}>{j.title}</SelectItem>)}
+            {jobs.map((j) => {
+              const isMine = j.customer_id === user?.id;
+              return (
+                <SelectItem key={j.id} value={j.id}>
+                  <span className="flex items-center gap-2">
+                    {j.title}
+                    {isEmployer && !isAdmin && isMine && (
+                      <Badge variant="outline" className="text-[10px] px-1.5 py-0 ml-1 border-primary/40 text-primary">{t.myJobBadge}</Badge>
+                    )}
+                  </span>
+                </SelectItem>
+              );
+            })}
           </SelectContent>
         </Select>
       </div>
@@ -155,7 +167,14 @@ export default function KanbanPage() {
                         <GripVertical className="h-4 w-4 text-muted-foreground/40 mt-0.5 flex-shrink-0" />
                         <div className="min-w-0 flex-1">
                           <p className="font-medium text-sm truncate">{candidate.full_name}</p>
-                          {job && <p className="text-xs text-muted-foreground truncate">{job.title}</p>}
+                          {job && (
+                            <div className="flex items-center gap-1.5">
+                              <p className="text-xs text-muted-foreground truncate">{job.title}</p>
+                              {isEmployer && !isAdmin && myJobIds.has(job.id) && (
+                                <span className="inline-block w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" title={t.myJobBadge} />
+                              )}
+                            </div>
+                          )}
                           {candidate.linkedin_url && (
                             <a href={candidate.linkedin_url} target="_blank" rel="noopener noreferrer"
                               className="text-xs text-primary hover:underline inline-flex items-center gap-1 mt-1">
