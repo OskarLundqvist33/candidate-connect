@@ -17,7 +17,7 @@ type Candidate = Database["public"]["Tables"]["candidates"]["Row"];
 type Job = Database["public"]["Tables"]["jobs"]["Row"];
 
 export default function CandidatesPage() {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const { t, lang } = useLanguage();
   const { toast } = useToast();
   const [candidates, setCandidates] = useState<Candidate[]>([]);
@@ -128,7 +128,7 @@ export default function CandidatesPage() {
           <h1 className="text-2xl font-bold">{t.candidatesTitle}</h1>
           <p className="text-muted-foreground text-sm">{t.candidatesSubtitle}</p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
+        {isAdmin && <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button onClick={openCreate}><Plus className="h-4 w-4 mr-2" />{t.newCandidate}</Button>
           </DialogTrigger>
@@ -162,7 +162,7 @@ export default function CandidatesPage() {
               <Button onClick={handleSave} className="w-full">{editingCandidate ? t.save : t.add}</Button>
             </div>
           </DialogContent>
-        </Dialog>
+        </Dialog>}
       </div>
 
       {/* Assign dialog */}
@@ -234,15 +234,19 @@ export default function CandidatesPage() {
                     <Button size="icon" variant="ghost" onClick={() => handleAssess(c)} title={t.assessCandidate} disabled={assessingId === c.id}>
                       {assessingId === c.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                     </Button>
-                    <Button size="icon" variant="ghost" onClick={() => { setAssignCandidateId(c.id); setAssignJobId(""); setAssignOpen(true); }} title={t.assignToJob}>
-                      <UserPlus className="h-4 w-4" />
-                    </Button>
-                    <Button size="icon" variant="ghost" onClick={() => openEdit(c)}>
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button size="icon" variant="ghost" className="text-destructive" onClick={() => handleDelete(c.id)}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    {isAdmin && (
+                      <>
+                        <Button size="icon" variant="ghost" onClick={() => { setAssignCandidateId(c.id); setAssignJobId(""); setAssignOpen(true); }} title={t.assignToJob}>
+                          <UserPlus className="h-4 w-4" />
+                        </Button>
+                        <Button size="icon" variant="ghost" onClick={() => openEdit(c)}>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button size="icon" variant="ghost" className="text-destructive" onClick={() => handleDelete(c.id)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </TableCell>
               </TableRow>
