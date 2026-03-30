@@ -16,7 +16,7 @@ type Candidate = Database["public"]["Tables"]["candidates"]["Row"];
 type JobCandidate = Database["public"]["Tables"]["job_candidates"]["Row"];
 
 export default function KanbanPage() {
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, isEmployer } = useAuth();
   const { t } = useLanguage();
   const { toast } = useToast();
   const [jobs, setJobs] = useState<Job[]>([]);
