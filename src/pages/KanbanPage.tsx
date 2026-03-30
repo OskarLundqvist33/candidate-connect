@@ -16,7 +16,7 @@ type Candidate = Database["public"]["Tables"]["candidates"]["Row"];
 type JobCandidate = Database["public"]["Tables"]["job_candidates"]["Row"];
 
 export default function KanbanPage() {
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, isEmployer } = useAuth();
   const { t } = useLanguage();
   const { toast } = useToast();
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -66,6 +66,14 @@ export default function KanbanPage() {
     }
   };
 
+  // Determine which job_candidates this user can drag (owns the job)
+  const myJobIds = new Set(jobs.filter((j) => j.customer_id === user?.id).map((j) => j.id));
+  const canDrag = (jc: JobCandidate) => {
+    if (isAdmin) return true;
+    if (isEmployer && myJobIds.has(jc.job_id)) return true;
+    return false;
+  };
+
   const handleDragStart = (e: React.DragEvent, jcId: string) => {
     setDraggedId(jcId);
     e.dataTransfer.effectAllowed = "move";
@@ -74,6 +82,9 @@ export default function KanbanPage() {
   const handleDrop = async (e: React.DragEvent, stage: CandidateStage) => {
     e.preventDefault();
     if (!draggedId) return;
+    // Verify permission
+    const jc = jobCandidates.find((j) => j.id === draggedId);
+    if (jc && !canDrag(jc)) return;
     const { error } = await supabase.from("job_candidates").update({ stage }).eq("id", draggedId);
     if (error) {
       toast({ title: t.error, description: error.message, variant: "destructive" });
@@ -84,7 +95,11 @@ export default function KanbanPage() {
   };
 
   const filteredJC = jobCandidates.filter((jc) => {
-    if (selectedJob !== "all" && jc.job_id !== selectedJob) return false;
+    if (selectedJob === "mine") {
+      if (!myJobIds.has(jc.job_id)) return false;
+    } else if (selectedJob !== "all" && jc.job_id !== selectedJob) {
+      return false;
+    }
     if (searchTerm) {
       const candidate = candidates.find((c) => c.id === jc.candidate_id);
       if (!candidate) return false;
@@ -112,6 +127,7 @@ export default function KanbanPage() {
           <SelectTrigger className="w-56"><SelectValue placeholder={t.filterByJob} /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">{t.allJobs}</SelectItem>
+            {isEmployer && !isAdmin && <SelectItem value="mine">{t.myJobs}</SelectItem>}
             {jobs.map((j) => <SelectItem key={j.id} value={j.id}>{j.title}</SelectItem>)}
           </SelectContent>
         </Select>
@@ -134,7 +150,7 @@ export default function KanbanPage() {
                   const job = getJobById(jc.job_id);
                   if (!candidate) return null;
                   return (
-                    <div key={jc.id} className="kanban-card animate-slide-in" draggable={isAdmin} onDragStart={(e) => isAdmin && handleDragStart(e, jc.id)}>
+                    <div key={jc.id} className="kanban-card animate-slide-in" draggable={canDrag(jc)} onDragStart={(e) => canDrag(jc) && handleDragStart(e, jc.id)}>
                       <div className="flex items-start gap-2">
                         <GripVertical className="h-4 w-4 text-muted-foreground/40 mt-0.5 flex-shrink-0" />
                         <div className="min-w-0 flex-1">
